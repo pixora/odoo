@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Genera i template Excel di importazione Odoo 19 (compatibili 18 salvo note).
+"""Genera i template Excel di importazione Odoo 20.0 (repo pixora/odoo, branch 20.0).
 
 Uso:  python3 genera_template.py   (dalla cartella import_templates)
 Output: file 01..06 *.xlsx nella stessa cartella.
 
 I nomi colonna sono i nomi TECNICI dei campi Odoo: l'import li riconosce in
 automatico indipendentemente dalla lingua dell'utente.
-Campi verificati su sorgente Odoo (repo) e su istanza Odoo 19 Enterprise
-(fields_get, solo metadati).
+Campi Community verificati sul sorgente 20.0 del repo. Campi Enterprise (budget)
+non presenti nel repo: verificati via fields_get su istanza Odoo 19, da riconfermare su 20.
 """
 import csv
 import os
@@ -81,6 +81,16 @@ PAYMENT_TERMS = [
     ('account.account_payment_term_90days_on_the_10th', '90 gg il 10'),
 ]
 BOOL = ['TRUE', 'FALSE']
+EMP_TYPES = [
+    ('hr.contract_type_employee', 'Dipendente'),
+    ('hr.contract_type_company_executive', 'Dirigente / amministratore'),
+    ('hr.contract_type_interim', 'Interinale'),
+    ('hr.contract_type_seasonal', 'Occasionale / stagionale'),
+    ('hr.contract_type_apprenticeship', 'Apprendista'),
+    ('hr.contract_type_intern', 'Stagista / tirocinante'),
+    ('hr.contract_type_student', 'Studente'),
+    ('hr.contract_type_thesis', 'Tesista'),
+]
 PROVINCE = ('Usare base.state_it_ + sigla provincia minuscola: base.state_it_mi (Milano), '
             'base.state_it_rm (Roma), base.state_it_to (Torino)...')
 EXT_ID = ('Codice univoco della riga (es. FORN_0001). Odoo lo salva come __import__.FORN_0001: '
@@ -125,45 +135,23 @@ TEMPLATES = [
         ],
     },
     {
-        'file': '02a_Istituti_Bancari.xlsx',
-        'model': 'res.bank',
-        'title': 'Istituti bancari (anagrafica banche)',
-        'menu': 'Contabilità > Configurazione > Banche',
-        'cols': [
-            ('id', 'ID esterno', 'C', 'Testo', 'BANK_INTESA', EXT_ID, 16, None),
-            ('name', 'Nome', 'O', 'Testo', 'Intesa Sanpaolo', '', 28, None),
-            ('bic', 'Codice BIC/SWIFT', 'C', 'Testo 8/11', 'BCITITMM', 'Usato nei bonifici SEPA.', 14, None),
-            ('street', 'Via', 'F', 'Testo', '', '', 22, None),
-            ('zip', 'CAP', 'F', 'Testo', '', '', 8, None),
-            ('city', 'Città', 'F', 'Testo', '', '', 14, None),
-            ('state/id', 'Provincia (ID esterno)', 'F', 'ID esterno', 'base.state_it_to', PROVINCE, 16, None),
-            ('country/id', 'Nazione (ID esterno)', 'C', 'ID esterno', 'base.it', '', 12, None),
-            ('phone', 'Telefono', 'F', 'Testo', '', '', 14, None),
-            ('email', 'Email', 'F', 'Testo', '', '', 20, None),
-        ],
-        'examples': [
-            ['BANK_INTESA', 'ESEMPIO Intesa Sanpaolo', 'BCITITMM', 'Piazza San Carlo 156', '10121', 'Torino', 'base.state_it_to', 'base.it', '', ''],
-            ['BANK_UNICREDIT', 'ESEMPIO UniCredit', 'UNCRITMM', 'Piazza Gae Aulenti 3', '20154', 'Milano', 'base.state_it_mi', 'base.it', '', ''],
-        ],
-    },
-    {
-        'file': '02b_Conti_Bancari.xlsx',
+        'file': '02_Conti_Bancari.xlsx',
         'model': 'res.partner.bank',
-        'title': 'Conti bancari (IBAN) di fornitori, dipendenti e azienda',
+        'title': 'Conti bancari (IBAN + banca) di fornitori, dipendenti e azienda',
         'menu': 'Contabilità > Configurazione > Conti bancari  (Impostazioni > Tecnico se non visibile)',
         'cols': [
             ('id', 'ID esterno', 'C', 'Testo', 'IBAN_FORN_0001', EXT_ID, 16, None),
             ('partner_id/id', 'Titolare (ID esterno)', 'O', 'ID esterno', 'FORN_0001', 'ID esterno del fornitore importato nel file 01 (scrivere FORN_0001, Odoo aggiunge __import__.). In alternativa usare la colonna partner_id con il NOME esatto. Per l\'azienda: base.main_company -> usare base.main_partner.', 20, None),
-            ('acc_number', 'Numero conto (IBAN)', 'O', 'Testo', 'IT60X0542811101000000123456', 'IBAN senza spazi. Odoo ne verifica il formato.', 32, None),
-            ('acc_holder_name', 'Intestatario (se diverso)', 'F', 'Testo', '', 'Solo se diverso dal nome del titolare.', 22, None),
-            ('bank_id/id', 'Banca (ID esterno)', 'C', 'ID esterno', 'BANK_INTESA', 'ID esterno dell\'istituto (file 02a). Oppure colonna bank_id con il nome.', 16, None),
-            ('currency_id', 'Valuta', 'F', 'Codice ISO', 'EUR', 'Vuoto = valuta aziendale.', 8, None),
+            ('account_number', 'Numero conto (IBAN)', 'O', 'Testo', 'IT60X0542811101000000123456', 'IBAN senza spazi. Odoo ne verifica il formato e ricava il paese.', 32, None),
+            ('holder_name', 'Intestatario (se diverso)', 'F', 'Testo', '', 'Solo se diverso dal nome del titolare.', 22, None),
+            ('bank_name', 'Nome banca', 'C', 'Testo', 'Intesa Sanpaolo', 'In Odoo 20 la banca è un testo sul conto (il modello res.bank non esiste più).', 22, None),
+            ('bank_bic', 'BIC/SWIFT', 'C', 'Testo 8/11', 'BCITITMM', 'Usato nei bonifici SEPA/esteri.', 12, None),
             ('allow_out_payment', 'Pagamenti in uscita consentiti', 'C', 'Booleano', 'TRUE / FALSE', 'Se FALSE Odoo blocca i bonifici SEPA verso questo IBAN (conto "non fidato"). Richiede il gruppo "Validare conti bancari".', 14, BOOL),
             ('note', 'Note', 'F', 'Testo', '', '', 20, None),
         ],
         'examples': [
-            ['IBAN_FORN_0001', 'FORN_0001', 'IT60X0542811101000000123456', '', 'BANK_INTESA', 'EUR', 'TRUE', ''],
-            ['IBAN_FORN_0002', 'FORN_0002', 'IT02L1234512345123456789012', '', 'BANK_UNICREDIT', 'EUR', 'TRUE', ''],
+            ['IBAN_FORN_0001', 'FORN_0001', 'IT60X0542811101000000123456', '', 'ESEMPIO Intesa Sanpaolo', 'BCITITMM', 'TRUE', ''],
+            ['IBAN_FORN_0002', 'FORN_0002', 'IT02L1234512345123456789012', '', 'ESEMPIO UniCredit', 'UNCRITMM', 'TRUE', ''],
         ],
     },
     {
@@ -185,12 +173,11 @@ TEMPLATES = [
             ('coach_id/id', 'Coach (ID esterno)', 'F', 'ID esterno', '', 'Come Responsabile.', 12, None),
             ('resource_calendar_id', 'Orario di lavoro', 'C', 'Nome', 'Standard 40 hours/week', 'Nome esatto del calendario (Configurazione > Orari di lavoro).', 20, None),
             ('work_location_id', 'Luogo di lavoro', 'F', 'Nome', 'Sede', '', 12, None),
-            ('employee_type', 'Tipo dipendente', 'C', 'Selezione', 'employee', 'Default: employee.', 12, ['employee', 'worker', 'student', 'trainee', 'contractor', 'freelance']),
+            ('employee_type_id/id', 'Tipo dipendente', 'C', 'ID esterno', 'hr.contract_type_employee', 'Odoo 20: anagrafica hr.employee.type. Vedi foglio Valori.', 26, [e[0] for e in EMP_TYPES]),
             ('contract_date_start', 'Data inizio contratto', 'C', 'Data', '2024-01-15', 'Formato AAAA-MM-GG.', 14, None),
-            ('date_version', 'Data validità dati', 'F', 'Data', '2024-01-15', 'Odoo 19: data di efficacia della "versione" del dipendente. Vuoto = oggi.', 14, None),
+            ('date_version', 'Data validità dati', 'F', 'Data', '2024-01-15', 'Odoo 20: data di efficacia della "versione" del dipendente. Vuoto = oggi.', 14, None),
             ('identification_id', 'N. identificazione (Codice Fiscale)', 'C', 'Testo', 'RSSMRA80A01H501U', 'Convenzione consigliata: Codice Fiscale.', 18, None),
-            ('ssnid', 'N. previdenziale', 'F', 'Testo', '', 'Matricola INPS / altro, se usato.', 12, None),
-            ('sex', 'Sesso', 'F', 'Selezione', 'male / female / other', 'In Odoo 18 il campo si chiama gender.', 10, ['male', 'female', 'other']),
+            ('sex', 'Sesso (legale)', 'F', 'Selezione', 'male / female', 'Sesso legale anagrafico (Odoo 20 ammette solo male/female).', 10, ['male', 'female']),
             ('birthday', 'Data di nascita', 'F', 'Data', '1980-01-01', '', 12, None),
             ('place_of_birth', 'Luogo di nascita', 'F', 'Testo', 'Roma', '', 14, None),
             ('country_of_birth/id', 'Paese di nascita', 'F', 'ID esterno', 'base.it', '', 10, None),
@@ -210,8 +197,8 @@ TEMPLATES = [
             ('barcode', 'Badge ID', 'F', 'Testo', '', 'Univoco.', 10, None),
         ],
         'examples': [
-            ['DIP_0001', 'ESEMPIO Bianchi Laura', '', 'l.bianchi@example.com', '', '', 'Amministrazione', '', 'Responsabile amministrativa', '', '', 'Standard 40 hours/week', '', 'employee', '2020-03-01', '', 'BNCLRA85C41F205X', '', 'female', '1985-03-01', 'Milano', 'base.it', 'base.it', '', '', '', '', 'base.it', '', '', 'married', 1, '', '', '', ''],
-            ['DIP_0002', 'ESEMPIO Verdi Paolo', '', 'p.verdi@example.com', '', '', 'Amministrazione', '', 'Contabile', 'DIP_0001', '', 'Standard 40 hours/week', '', 'employee', '2023-09-01', '', 'VRDPLA90A01L219Z', '', 'male', '1990-01-01', 'Torino', 'base.it', 'base.it', '', '', '', '', 'base.it', '', '', 'single', 0, '', '', '', ''],
+            ['DIP_0001', 'ESEMPIO Bianchi Laura', '', 'l.bianchi@example.com', '', '', 'Amministrazione', '', 'Responsabile amministrativa', '', '', 'Standard 40 hours/week', '', 'hr.contract_type_employee', '2020-03-01', '', 'BNCLRA85C41F205X', 'female', '1985-03-01', 'Milano', 'base.it', 'base.it', '', '', '', '', 'base.it', '', '', 'married', 1, '', '', '', ''],
+            ['DIP_0002', 'ESEMPIO Verdi Paolo', '', 'p.verdi@example.com', '', '', 'Amministrazione', '', 'Contabile', 'DIP_0001', '', 'Standard 40 hours/week', '', 'hr.contract_type_employee', '2023-09-01', '', 'VRDPLA90A01L219Z', 'male', '1990-01-01', 'Torino', 'base.it', 'base.it', '', '', '', '', 'base.it', '', '', 'single', 0, '', '', '', ''],
         ],
     },
     {
@@ -354,6 +341,8 @@ def values_sheet(wb, tpl):
             lists.append((field, ACCOUNT_TYPES))
         elif vals and field == 'tag_ids/id':
             lists.append((field, IT_TAGS))
+        elif vals and field == 'employee_type_id/id':
+            lists.append((field, EMP_TYPES))
         elif vals and 'payment_term' in field:
             lists.append((field, PAYMENT_TERMS))
     if not lists:
@@ -415,7 +404,7 @@ def build(tpl):
     ws.title = 'Dati'  # PRIMO foglio = quello proposto da Odoo all'import
     cols = tpl['cols']
     style_header(ws, cols)
-    text_cols = {i for i, c in enumerate(cols, 1) if c[0] in ('code', 'zip', 'vat', 'acc_number', 'l10n_it_pa_index', 'private_zip', 'item_ids/account_id', 'ref', 'barcode')}
+    text_cols = {i for i, c in enumerate(cols, 1) if c[0] in ('code', 'zip', 'vat', 'account_number', 'l10n_it_pa_index', 'private_zip', 'item_ids/account_id', 'ref', 'barcode')}
     for row in tpl['examples']:
         ws.append(row)
         for i, c in enumerate(ws[ws.max_row], 1):

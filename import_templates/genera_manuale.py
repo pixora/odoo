@@ -68,11 +68,12 @@ def num(text):
 # ---------------------------------------------------------------- copertina
 h = doc.add_heading('Manuale template di importazione dati Odoo', 0)
 p('Fornitori · Banche · Dipendenti · Piano dei conti · Budget analitico · Budget finanziario')
-p('Versione di riferimento: Odoo 19 Enterprise (note per Odoo 18 al capitolo 9). '
+p('Versione di riferimento: Odoo 20.0 Enterprise (repository pixora/odoo, branch 20.0). Differenze con 18/19 al capitolo 9. '
   'Classificazione: Interno.')
-p('I nomi dei campi sono stati verificati sul sorgente Odoo e, per i moduli Enterprise (budget), '
-  'sui metadati (fields_get) di un\'istanza Odoo 19. Prima del go-live eseguire sempre un import di prova '
-  'in un database di staging/test.')
+p('I nomi dei campi Community (contatti, conti bancari, dipendenti, piano dei conti) sono verificati sul sorgente '
+  'Odoo 20.0 del repository. I modelli dei budget sono Enterprise e non sono nel repository: sono stati verificati '
+  'su un\'istanza Odoo 19 e vanno riconfermati su 20 con un import di prova. Prima del go-live eseguire sempre un '
+  'import di prova in un database di staging/test.')
 
 # ---------------------------------------------------------------- 1
 doc.add_heading('1. Contenuto del pacchetto', 1)
@@ -117,10 +118,9 @@ table(['#', 'File', 'Prerequisiti'], [
     ['0', '(configurazione)', 'Azienda/e, localizzazione italiana (l10n_it + l10n_it_edi) installata, valute e lingue attive, '
                               'posizioni fiscali, reparti e orari di lavoro, piani e conti analitici.'],
     ['1', '04_Piano_dei_Conti', 'Solo i conti MANCANTI rispetto al piano standard l10n_it (vedi foglio Rif_PdC_l10n_it).'],
-    ['2', '02a_Istituti_Bancari', 'Nessuno.'],
-    ['3', '01_Fornitori', 'Conto debiti, termini di pagamento e posizioni fiscali esistenti.'],
-    ['4', '02b_Conti_Bancari', 'Fornitori (1) e istituti (2) già importati.'],
-    ['5', '03_Dipendenti', 'Reparti, posizioni, orari di lavoro. IBAN dipendenti: vedi 5.2.'],
+    ['2', '01_Fornitori', 'Conto debiti, termini di pagamento e posizioni fiscali esistenti.'],
+    ['3', '02_Conti_Bancari', 'Fornitori (2) già importati.'],
+    ['4-5', '03_Dipendenti', 'Reparti, posizioni, orari di lavoro. IBAN dipendenti: vedi 5.2.'],
     ['6', '05_Budget_Analitico', 'Modulo Budget (account_budget) attivo, piani e conti analitici esistenti.'],
     ['7', '06_Budget_Finanziario', 'Piano dei conti definitivo.'],
 ])
@@ -153,16 +153,16 @@ bullet('Termini di pagamento: usare gli ID standard del foglio Valori oppure, pe
 bullet('La P.IVA viene validata: un checksum errato blocca la riga. Correggere il dato alla fonte, non disattivare il controllo.')
 bullet('Lo stesso file, aggiungendo customer_rank = 1, può caricare anche i clienti.')
 
-doc.add_heading('5.2 Banche (02a + 02b)', 2)
-p('Due livelli distinti:')
-bullet('02a Istituti bancari (res.bank): l\'anagrafica della banca (nome, BIC). Si carica una volta.')
-bullet('02b Conti bancari (res.partner.bank): l\'IBAN, collegato a un titolare (fornitore, dipendente o azienda) e opzionalmente alla banca.')
-p('', 'Conti bancari dei DIPENDENTI (Odoo 19):')
+doc.add_heading('5.2 Banche (02_Conti_Bancari.xlsx - res.partner.bank)', 2)
+p('In Odoo 20 non esiste più un\'anagrafica separata degli istituti bancari (modello res.bank): nome banca e BIC '
+  'sono campi di testo direttamente sul conto bancario. Un unico file quindi carica IBAN + banca, collegati al titolare '
+  '(fornitore, dipendente o azienda). Il paese del conto viene ricavato automaticamente dall\'IBAN.')
+p('', 'Conti bancari dei DIPENDENTI:')
 num('Importare i dipendenti (03_Dipendenti).')
-num('Importare gli IBAN in 02b usando la colonna partner_id (senza /id) con il NOME del dipendente '
+num('Importare gli IBAN in 02_Conti_Bancari usando la colonna partner_id (senza /id) con il NOME del dipendente '
     '(Odoo crea per ogni dipendente un contatto con lo stesso nome).')
 num('Reimportare 03_Dipendenti con le sole colonne id e bank_account_ids contenente l\'IBAN.')
-p('Conti bancari dell\'AZIENDA: ', 'Nota. ')
+p('', 'Conti bancari dell\'AZIENDA:')
 p('Per i conti dell\'azienda è preferibile creare direttamente i registri banca (Contabilità > Configurazione > Registri, '
   'tipo Banca, campo Numero conto): Odoo crea il conto contabile (prefisso 182) e il conto bancario collegato.')
 p('allow_out_payment (Pagamenti in uscita consentiti): se FALSE Odoo blocca i bonifici verso quell\'IBAN. '
@@ -171,10 +171,11 @@ p('allow_out_payment (Pagamenti in uscita consentiti): se FALSE Odoo blocca i bo
 doc.add_heading('5.3 Dipendenti (03_Dipendenti.xlsx - hr.employee)', 2)
 p('Una riga per dipendente. Il Responsabile (parent_id/id) deve essere in una riga precedente o già presente in Odoo: '
   'ordinare il file dall\'alto (direzione) verso il basso.')
-bullet('In Odoo 19 i dati contrattuali/anagrafici sono "versionati" (hr.version): date_version indica da quando valgono. '
+bullet('In Odoo 20 i dati contrattuali/anagrafici sono "versionati" (hr.version): date_version indica da quando valgono. '
        'In import si può lasciare vuoto (= oggi) o mettere la data di assunzione.')
 bullet('company_id: nome esatto dell\'azienda (importante in multi-company).')
-bullet('Codice fiscale: convenzione consigliata nel campo identification_id.')
+bullet('Codice fiscale: convenzione consigliata nel campo identification_id (il campo ssnid non esiste più in Odoo 20).')
+bullet('Tipo dipendente: in Odoo 20 è un\'anagrafica (employee_type_id) e non più un elenco fisso: usare gli ID del foglio Valori (es. hr.contract_type_employee).')
 p('', 'Protezione dati (GDPR):')
 p('Il file contiene dati personali. Applicare la minimizzazione: compilare solo le colonne realmente necessarie '
   '(le facoltative si possono eliminare). Non inserire dati sanitari o categorie particolari. Trasmettere il file '
@@ -244,16 +245,20 @@ table(['Opzione', 'Come', 'Pro', 'Contro', 'Quando'], [
 ])
 
 # ---------------------------------------------------------------- 9 versioni
-doc.add_heading('9. Differenze Odoo 18 / Odoo 19', 1)
-table(['Area', 'Odoo 18', 'Odoo 19'], [
-    ['Dipendente - sesso', 'gender', 'sex'],
-    ['Dipendente - conto bancario', 'bank_account_id (uno solo)', 'bank_account_ids (più conti)'],
-    ['Dipendente - versioni', 'non presente', 'date_version (hr.version)'],
-    ['Conto bancario', 'acc_number, bank_id', 'acc_number, bank_id (invariato)'],
-    ['Budget analitico / finanziario', 'budget.analytic / account.report.budget', 'invariati'],
+doc.add_heading('9. Differenze tra versioni (18 / 19 / 20)', 1)
+table(['Area', 'Odoo 18', 'Odoo 19', 'Odoo 20 (questi template)'], [
+    ['Anagrafica banche', 'res.bank + bank_id', 'res.bank + bank_id', 'non esiste: bank_name, bank_bic sul conto'],
+    ['Numero conto (IBAN)', 'acc_number', 'acc_number', 'account_number'],
+    ['Intestatario conto', 'acc_holder_name', 'acc_holder_name', 'holder_name'],
+    ['Valuta conto bancario', 'currency_id', 'currency_id', 'non presente'],
+    ['Dipendente - sesso', 'gender', 'sex (male/female/other)', 'sex (male/female)'],
+    ['Dipendente - tipo', 'employee_type (elenco)', 'employee_type (elenco)', 'employee_type_id (anagrafica)'],
+    ['Dipendente - n. previdenziale', 'ssnid', 'ssnid', 'non presente'],
+    ['Dipendente - conto bancario', 'bank_account_id (uno)', 'bank_account_ids (più conti)', 'bank_account_ids (più conti)'],
+    ['Dipendente - versioni', 'non presente', 'date_version', 'date_version'],
+    ['Budget analitico / finanziario', 'budget.analytic / account.report.budget', 'invariati', 'da riconfermare (Enterprise)'],
 ])
-p('In Odoo 18 rinominare le colonne del file dipendenti come da tabella. Le versioni successive (20+) cambiano '
-  'ulteriormente i conti bancari (es. account_number): rigenerare i template con lo script adattato.')
+p('Per usare i template su un database 18 o 19 rinominare le colonne come da tabella (o adattare genera_template.py e rigenerare).')
 
 # ---------------------------------------------------------------- 10 troubleshooting
 doc.add_heading('10. Errori frequenti', 1)
