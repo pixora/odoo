@@ -207,8 +207,8 @@ TEMPLATES = [
         'title': 'Piano dei conti',
         'menu': 'Contabilità > Configurazione > Piano dei conti',
         'cols': [
-            ('id', 'ID esterno', 'C', 'Testo', 'CONTO_6105', 'Per AGGIORNARE conti già esistenti (es. quelli di l10n_it) esportarli prima con "Compatibile con importazione" e usare l\'ID esportato.', 14, None),
-            ('code', 'Codice', 'O', 'Testo', '6105', 'Univoco per azienda. Solo cifre/lettere/punti. Formattare la colonna come TESTO.', 10, None),
+            ('id', 'ID esterno', 'C', 'Testo', 'CONTO_4214', 'Per AGGIORNARE conti già esistenti (es. quelli di l10n_it) esportarli prima con "Compatibile con importazione" e usare l\'ID esportato.', 14, None),
+            ('code', 'Codice', 'O', 'Testo', '4214', 'Univoco per azienda. Solo cifre/lettere/punti. Formattare la colonna come TESTO.', 10, None),
             ('name', 'Nome conto', 'O', 'Testo', 'Consulenze amministrative', '', 34, None),
             ('account_type', 'Tipo', 'O', 'Selezione', 'expense', 'Vedi foglio Valori. Determina bilancio/CE, chiusura e riporto saldi.', 22, [a[0] for a in ACCOUNT_TYPES]),
             ('reconcile', 'Consenti riconciliazione', 'C', 'Booleano', 'TRUE / FALSE', 'OBBLIGATORIO TRUE per asset_receivable e liability_payable. Consigliato TRUE per conti transitori/anticipi.', 12, BOOL),
@@ -219,9 +219,9 @@ TEMPLATES = [
             ('note', 'Note interne', 'F', 'Testo', '', '', 20, None),
         ],
         'examples': [
-            ['CONTO_6105', '6105', 'ESEMPIO Consulenze amministrative', 'expense', 'FALSE', 'FALSE', 'l10n_it.account_tag_B_PL', '', '', ''],
+            ['CONTO_4214', '4214', 'ESEMPIO Consulenze amministrative', 'expense', 'FALSE', 'FALSE', 'l10n_it.account_tag_B_PL', '', '', ''],
             ['CONTO_1520', '1520', 'ESEMPIO Anticipi a fornitori', 'asset_current', 'TRUE', 'FALSE', 'l10n_it.account_tag_C_ATT', '', '', ''],
-            ['CONTO_4105', '4105', 'ESEMPIO Ricavi servizi', 'income', 'FALSE', 'FALSE', 'l10n_it.account_tag_A_PL', '', '', ''],
+            ['CONTO_3120', '3120', 'ESEMPIO Ricavi servizi', 'income', 'FALSE', 'FALSE', 'l10n_it.account_tag_A_PL', '', '', ''],
         ],
     },
     {
@@ -260,15 +260,15 @@ TEMPLATES = [
             ('id', 'ID esterno', 'C', 'Testo', 'BUDFIN_2026', 'Solo sulla PRIMA riga del budget.', 14, None),
             ('name', 'Nome budget', 'O', 'Testo', 'Budget 2026', 'Solo sulla PRIMA riga. È il nome che si seleziona nel report.', 18, None),
             ('company_id', 'Azienda', 'O', 'Nome', '', 'Solo prima riga. Vuoto = azienda corrente.', 16, None),
-            ('item_ids/account_id', 'Riga: conto contabile', 'O', 'Codice conto', '4101', 'Codice del conto del piano dei conti (deve esistere).', 12, None),
+            ('item_ids/account_id', 'Riga: conto contabile', 'O', 'Codice conto', '3101', 'Codice del conto del piano dei conti (deve esistere).', 12, None),
             ('item_ids/date', 'Riga: data (mese)', 'O', 'Data', '2026-01-01', 'Una riga per conto per mese. Convenzione: primo giorno del mese.', 12, None),
             ('item_ids/amount', 'Riga: importo', 'O', 'Numero', '-10000', 'Convenzione SALDO CONTABILE (dare - avere): COSTI positivi, RICAVI negativi. Verificare con un test (vedi manuale).', 12, None),
         ],
         'examples': [
-            ['BUDFIN_2026', 'ESEMPIO Budget 2026', '', '4101', '2026-01-01', -10000],
-            ['', '', '', '4101', '2026-02-01', -12000],
-            ['', '', '', '6105', '2026-01-01', 1500],
-            ['', '', '', '6105', '2026-02-01', 1500],
+            ['BUDFIN_2026', 'ESEMPIO Budget 2026', '', '3101', '2026-01-01', -10000],
+            ['', '', '', '3101', '2026-02-01', -12000],
+            ['', '', '', '4204', '2026-01-01', 1500],
+            ['', '', '', '4204', '2026-02-01', 1500],
         ],
     },
 ]
@@ -311,7 +311,7 @@ def legend_sheet(wb, tpl):
     ws.append([f'{tpl["title"]}  -  modello Odoo: {tpl["model"]}'])
     ws['A1'].font = Font(bold=True, size=13)
     ws.append([f'Menu di importazione: {tpl["menu"]}  >  Preferiti (stella) / ingranaggio > Importa record'])
-    ws.append(['Rosso = obbligatorio · Blu = consigliato · Grigio = facoltativo. Le righe gialle nel foglio Dati sono ESEMPI: cancellarle prima di importare.'])
+    ws.append([tpl.get('rows_note', 'Rosso = obbligatorio · Blu = consigliato · Grigio = facoltativo. Le righe gialle nel foglio Dati sono ESEMPI: cancellarle prima di importare.')])
     if tpl.get('one2many'):
         ws.append(['STRUTTURA TESTATA/RIGHE: la testata (id, nome, date...) si compila SOLO sulla prima riga; le righe successive hanno le colonne di testata VUOTE e compilano solo le colonne con "/" (righe di dettaglio).'])
     ws.append([])
@@ -379,7 +379,7 @@ def coa_reference_sheet(wb):
     ws.freeze_panes = 'A3'
 
 
-def matrix_sheet(wb):
+def matrix_sheet(wb, rows=None):
     """Foglio di lavoro (NON importabile) per preparare il budget finanziario in formato conto x mese."""
     ws = wb.create_sheet('Matrice_preparazione')
     ws.append(['Foglio di PREPARAZIONE (non si importa). Compilare conto x mese, poi convertire nel foglio Dati con lo script '
@@ -390,15 +390,16 @@ def matrix_sheet(wb):
     for c in ws[2]:
         c.font = HEAD_FONT
         c.fill = BLUE
-    ws.append(['4101', 'ESEMPIO Ricavi vendite'] + [-10000] * 12)
-    ws.append(['6105', 'ESEMPIO Consulenze'] + [1500] * 12)
+    for row in rows or [['3101', 'ESEMPIO Ricavi vendite'] + [-10000] * 12,
+                        ['4204', 'ESEMPIO Consulenze'] + [1500] * 12]:
+        ws.append(row)
     ws.column_dimensions['B'].width = 30
     for i in range(3, 15):
         ws.column_dimensions[get_column_letter(i)].width = 12
     ws.freeze_panes = 'C3'
 
 
-def build(tpl):
+def build(tpl, out_dir=HERE, row_fill=EXAMPLE):
     wb = Workbook()
     ws = wb.active
     ws.title = 'Dati'  # PRIMO foglio = quello proposto da Odoo all'import
@@ -408,7 +409,7 @@ def build(tpl):
     for row in tpl['examples']:
         ws.append(row)
         for i, c in enumerate(ws[ws.max_row], 1):
-            c.fill = EXAMPLE
+            c.fill = row_fill
             c.border = THIN
             if i in text_cols:
                 c.number_format = '@'
@@ -421,8 +422,8 @@ def build(tpl):
     if tpl['model'] == 'account.account':
         coa_reference_sheet(wb)
     if tpl['model'] == 'account.report.budget':
-        matrix_sheet(wb)
-    path = os.path.join(HERE, tpl['file'])
+        matrix_sheet(wb, tpl.get('matrix'))
+    path = os.path.join(out_dir, tpl['file'])
     wb.save(path)
     return path
 

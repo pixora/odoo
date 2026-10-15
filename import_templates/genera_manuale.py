@@ -187,7 +187,7 @@ doc.add_heading('5.4 Piano dei conti (04_Piano_dei_Conti.xlsx - account.account)
 p('Installando la localizzazione italiana Odoo crea già circa 190 conti (elencati nel foglio Rif_PdC_l10n_it). '
   'Il metodo consigliato è MAPPARE i conti del vecchio gestionale su quelli standard e importare solo quelli mancanti.')
 table(['Campo', 'Regola'], [
-    ['code', 'Univoco per azienda. Lunghezza coerente con lo standard (4 cifre in l10n_it, es. 6105). I conti banca usano prefisso 182, cassa 180.'],
+    ['code', 'Univoco per azienda. Lunghezza coerente con lo standard (4 cifre in l10n_it, es. 4204). I conti banca usano prefisso 182, cassa 180.'],
     ['account_type', 'Determina se il conto va in Stato patrimoniale o Conto economico, la chiusura d\'esercizio e il riporto saldi. Vedi foglio Valori.'],
     ['reconcile', 'TRUE obbligatorio per asset_receivable e liability_payable; consigliato per conti transitori, anticipi, effetti.'],
     ['tag_ids/id', 'Riclassifica del bilancio CEE (l10n_it.account_tag_...). Fondamentale per i report legali italiani.'],
