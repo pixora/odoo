@@ -6,8 +6,8 @@ Output: file 01..06 *.xlsx nella stessa cartella.
 
 I nomi colonna sono i nomi TECNICI dei campi Odoo: l'import li riconosce in
 automatico indipendentemente dalla lingua dell'utente.
-Campi Community verificati sul sorgente 20.0 del repo. Campi Enterprise (budget)
-non presenti nel repo: verificati via fields_get su istanza Odoo 19, da riconfermare su 20.
+Campi Community verificati sul sorgente 20.0 del repo. Budget analitico confermato
+su 20 dal modulo pixora/demo-alina; budget finanziario verificato su Odoo 19.
 """
 import csv
 import os

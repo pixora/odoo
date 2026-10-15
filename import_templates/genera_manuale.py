@@ -71,8 +71,9 @@ p('Fornitori · Banche · Dipendenti · Piano dei conti · Budget analitico · B
 p('Versione di riferimento: Odoo 20.0 Enterprise (repository pixora/odoo, branch 20.0). Differenze con 18/19 al capitolo 9. '
   'Classificazione: Interno.')
 p('I nomi dei campi Community (contatti, conti bancari, dipendenti, piano dei conti) sono verificati sul sorgente '
-  'Odoo 20.0 del repository. I modelli dei budget sono Enterprise e non sono nel repository: sono stati verificati '
-  'su un\'istanza Odoo 19 e vanno riconfermati su 20 con un import di prova. Prima del go-live eseguire sempre un '
+  'Odoo 20.0 del repository. Il budget analitico (budget.analytic, Enterprise) è confermato su Odoo 20 dal modulo '
+  'demo pix_demo_family_office (repo pixora/demo-alina); il budget finanziario (account.report.budget) è verificato '
+  'su Odoo 19 e va riconfermato su 20 con un import di prova. Prima del go-live eseguire sempre un '
   'import di prova in un database di staging/test.')
 
 # ---------------------------------------------------------------- 1
@@ -256,7 +257,8 @@ table(['Area', 'Odoo 18', 'Odoo 19', 'Odoo 20 (questi template)'], [
     ['Dipendente - n. previdenziale', 'ssnid', 'ssnid', 'non presente'],
     ['Dipendente - conto bancario', 'bank_account_id (uno)', 'bank_account_ids (più conti)', 'bank_account_ids (più conti)'],
     ['Dipendente - versioni', 'non presente', 'date_version', 'date_version'],
-    ['Budget analitico / finanziario', 'budget.analytic / account.report.budget', 'invariati', 'da riconfermare (Enterprise)'],
+    ['Budget analitico', 'budget.analytic', 'invariato', 'invariato (confermato da modulo demo 20.0)'],
+    ['Budget finanziario', 'account.report.budget', 'invariato', 'da riconfermare con import di prova'],
 ])
 p('Per usare i template su un database 18 o 19 rinominare le colonne come da tabella (o adattare genera_template.py e rigenerare).')
 
